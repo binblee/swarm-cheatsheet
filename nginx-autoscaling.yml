@@ -1,0 +1,17 @@
+version: "3.2"
+services:
+  nginx-autoscaling:
+    image: 59.110.153.59/admin/nginx:original
+    deploy:
+      mode: replicated
+      replicas: 1
+      restart_policy:
+        condition: any
+      update_config:
+        failure_action: continue
+    labels:
+      aliyun.auto_scaling.max_cpu: "20"
+      aliyun.auto_scaling.max_instances: "10"
+      aliyun.auto_scaling.min_cpu: "10"
+      aliyun.auto_scaling.min_instances: "1"
+      aliyun.auto_scaling.step: "1"

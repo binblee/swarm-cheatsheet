@@ -1,0 +1,22 @@
+jenkins:
+    image: 'registry.cn-hangzhou.aliyuncs.com/acs-sample/jenkins:2.60.3'
+    mem_limit: 4000000000
+    ports:
+        - "50000:50000"
+        - "8080:8080"
+    labels:
+        aliyun.scale: '1'
+    environment:
+        - 'constraint:jenkins_server==jenkins'
+    volumes:
+        - /var/lib/docker/jenkins:/var/jenkins_home
+    restart: always
+    links:
+        - slave-java
+slave-java:
+    image: 'registry.aliyuncs.com/acs-sample/jenkins-slave-dind-java'
+    volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+    restart: always
+    labels:
+        aliyun.scale: '1'

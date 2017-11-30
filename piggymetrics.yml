@@ -1,0 +1,241 @@
+version: '3.2'
+services:
+  rabbitmq:
+    image: registry.cn-beijing.aliyuncs.com/cos-solution/rabbitmq:3-management
+    ports:
+      - 15672:15672
+    deploy:
+      restart_policy:
+        condition: any
+    labels:
+      aliyun.routing.port_15672: rabbitmq
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "10"
+
+  config:
+    environment:
+      CONFIG_SERVICE_PASSWORD: $CONFIG_SERVICE_PASSWORD
+    image: registry.cn-beijing.aliyuncs.com/cos-solution/piggymetrics-config:1.0
+    deploy:
+      endpoint_mode: dnsrr
+      restart_policy:
+        condition: any
+    depends_on:
+      - zipkin
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "10"
+
+  registry:
+    environment:
+      CONFIG_SERVICE_PASSWORD: $CONFIG_SERVICE_PASSWORD
+    image: registry.cn-beijing.aliyuncs.com/cos-solution/piggymetrics-registry:1.0
+    ports:
+      - 8761:8761
+    deploy:
+      restart_policy:
+        condition: any
+    depends_on:
+      - config
+    labels:
+      aliyun.routing.port_8761: eureka
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "10"
+
+  gateway:
+    environment:
+      CONFIG_SERVICE_PASSWORD: $CONFIG_SERVICE_PASSWORD
+    image: registry.cn-beijing.aliyuncs.com/cos-solution/piggymetrics-gateway:1.0
+    deploy:
+      restart_policy:
+        condition: any
+    depends_on:
+      - config
+    ports:
+      - 80:4000
+    labels:
+      aliyun.routing.port_4000: piggymetrics
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "10"
+
+  auth-service:
+    environment:
+      CONFIG_SERVICE_PASSWORD: $CONFIG_SERVICE_PASSWORD
+      NOTIFICATION_SERVICE_PASSWORD: $NOTIFICATION_SERVICE_PASSWORD
+      STATISTICS_SERVICE_PASSWORD: $STATISTICS_SERVICE_PASSWORD
+      ACCOUNT_SERVICE_PASSWORD: $ACCOUNT_SERVICE_PASSWORD
+      MONGODB_PASSWORD: $MONGODB_PASSWORD
+    image: registry.cn-beijing.aliyuncs.com/cos-solution/piggymetrics-auth-service:1.0
+    deploy:
+      endpoint_mode: dnsrr
+      restart_policy:
+        condition: any
+    depends_on:
+      - config
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "10"
+
+  auth-mongodb:
+    environment:
+      MONGODB_PASSWORD: $MONGODB_PASSWORD
+    image: registry.cn-beijing.aliyuncs.com/cos-solution/piggymetrics-mongodb:1.0
+    deploy:
+      endpoint_mode: dnsrr
+      restart_policy:
+        condition: any
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "10"
+
+  account-service:
+    environment:
+      CONFIG_SERVICE_PASSWORD: $CONFIG_SERVICE_PASSWORD
+      ACCOUNT_SERVICE_PASSWORD: $ACCOUNT_SERVICE_PASSWORD
+      MONGODB_PASSWORD: $MONGODB_PASSWORD
+    image: registry.cn-beijing.aliyuncs.com/cos-solution/piggymetrics-account-service:1.0
+    restart: always
+    deploy:
+      endpoint_mode: dnsrr
+      restart_policy:
+        condition: any
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "10"
+
+  account-mongodb:
+    environment:
+      INIT_DUMP: account-service-dump.js
+      MONGODB_PASSWORD: $MONGODB_PASSWORD
+    image: registry.cn-beijing.aliyuncs.com/cos-solution/piggymetrics-mongodb:1.0
+    deploy:
+      endpoint_mode: dnsrr
+      restart_policy:
+        condition: any
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "10"
+
+  statistics-service:
+    environment:
+      CONFIG_SERVICE_PASSWORD: $CONFIG_SERVICE_PASSWORD
+      MONGODB_PASSWORD: $MONGODB_PASSWORD
+      STATISTICS_SERVICE_PASSWORD: $STATISTICS_SERVICE_PASSWORD
+    image: registry.cn-beijing.aliyuncs.com/cos-solution/piggymetrics-statistics-service:1.0
+    deploy:
+      endpoint_mode: dnsrr
+      restart_policy:
+        condition: any
+    depends_on:
+      - config
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "10"
+
+  statistics-mongodb:
+    environment:
+      MONGODB_PASSWORD: $MONGODB_PASSWORD
+    image: registry.cn-beijing.aliyuncs.com/cos-solution/piggymetrics-mongodb:1.0
+    deploy:
+      endpoint_mode: dnsrr
+      restart_policy:
+        condition: any
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "10"
+
+  notification-service:
+    environment:
+      CONFIG_SERVICE_PASSWORD: $CONFIG_SERVICE_PASSWORD
+      MONGODB_PASSWORD: $MONGODB_PASSWORD
+      NOTIFICATION_SERVICE_PASSWORD: $NOTIFICATION_SERVICE_PASSWORD
+    image: registry.cn-beijing.aliyuncs.com/cos-solution/piggymetrics-notification-service:1.0
+    deploy:
+      endpoint_mode: dnsrr
+      restart_policy:
+        condition: any
+    depends_on:
+      - config
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "10"
+
+  notification-mongodb:
+    image: registry.cn-beijing.aliyuncs.com/cos-solution/piggymetrics-mongodb:1.0
+    deploy:
+      endpoint_mode: dnsrr
+      restart_policy:
+        condition: any
+    environment:
+      MONGODB_PASSWORD: $MONGODB_PASSWORD
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "10"
+
+  monitoring:
+    environment:
+      CONFIG_SERVICE_PASSWORD: $CONFIG_SERVICE_PASSWORD
+    image: registry.cn-beijing.aliyuncs.com/cos-solution/piggymetrics-monitoring:1.0
+    deploy:
+      restart_policy:
+        condition: any
+    depends_on:
+      - config
+    ports:
+      - 9000:8080
+      - 8989:8989
+    labels:
+      aliyun.routing.port_8080: hystrix
+      aliyun.routing.port_8989: turbine-stream
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "10"
+
+  # Add support for Zipkin
+  zipkin:
+    image: registry.cn-beijing.aliyuncs.com/cos-solution/piggymetrics-zipkin:1.0
+    deploy:
+      restart_policy:
+        condition: any
+    depends_on:
+      - mysql
+    ports:
+      - 9411:9411
+    labels:
+      aliyun.routing.port_9411: zipkin
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "10"
+
+  # MySQL is needed only if ZipKin server uses MySQL
+  mysql:
+    environment:
+      MYSQL_ROOT_PASSWORD: $MYSQL_ROOT_PASSWORD
+      MYSQL_DATABASE: zipkin
+    image: registry.cn-beijing.aliyuncs.com/cos-solution/mysql:5.6
+    deploy:
+      restart_policy:
+        condition: any
+    ports:
+      - 3306
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "10"
