@@ -1,0 +1,22 @@
+version: '3.2'
+services:
+  nginx1:
+    image: 99.13.17.45/admin/nginx
+    deploy:
+      mode: replicated
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+    labels:
+      - aliyun.logs.nginx=stdout
+    ports:
+      - 80/tcp
+  tomcat1:
+      image: 99.12.28.178/admin/tomcat
+      deploy:
+        mode: replicated
+        replicas: 1
+        restart_policy:
+          condition: on-failure
+      ports:
+        - 8080/tcp

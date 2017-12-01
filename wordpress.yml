@@ -14,7 +14,7 @@ services:
       - WORDPRESS_NONCE_SALT=changeme
       - WORDPRESS_NONCE_AA=changeme
     ports:
-      - 8081
+      - 80
     depends_on:
       - mysql
     deploy:
