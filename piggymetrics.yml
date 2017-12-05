@@ -57,7 +57,7 @@ services:
     depends_on:
       - config
     ports:
-      - 80:4000
+      - 4000:4000
     labels:
       aliyun.routing.port_4000: piggymetrics
     logging:
